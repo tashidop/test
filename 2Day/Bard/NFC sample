@@ -1,0 +1,63 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <nfc/nfc.h>
+
+int main(int argc, char **argv) {
+  nfc_context *context;
+  nfc_device *device;
+  nfc_tag *tag;
+  uint8_t *uid;
+  size_t uid_len;
+
+  // NFC 컨텍스트를 초기화합니다.
+  context = nfc_init(NULL);
+  if (context == NULL) {
+    fprintf(stderr, "nfc_init() 실패\n");
+    return EXIT_FAILURE;
+  }
+
+  // NFC 장치를 열고 연결합니다.
+  device = nfc_open(context, NULL);
+  if (device == NULL) {
+    fprintf(stderr, "nfc_open() 실패\n");
+    nfc_exit(context);
+    return EXIT_FAILURE;
+  }
+
+  // NFC 태그를 감지합니다.
+  tag = nfc_tag_read(device, NULL);
+  if (tag == NULL) {
+    fprintf(stderr, "nfc_tag_read() 실패\n");
+    nfc_close(device);
+    nfc_exit(context);
+    return EXIT_FAILURE;
+  }
+
+  // NFC 태그의 UID를 가져옵니다.
+  uid = nfc_tag_get_uid(tag, &uid_len);
+  if (uid == NULL) {
+    fprintf(stderr, "nfc_tag_get_uid() 실패\n");
+    nfc_tag_free(tag);
+    nfc_close(device);
+    nfc_exit(context);
+    return EXIT_FAILURE;
+  }
+
+  // NFC 태그의 UID를 출력합니다.
+  printf("UID: ");
+  for (size_t i = 0; i < uid_len; i++) {
+    printf("%02x", uid[i]);
+  }
+  printf("\n");
+
+  // NFC 태그를 해제합니다.
+  nfc_tag_free(tag);
+
+  // NFC 장치를 닫습니다.
+  nfc_close(device);
+
+  // NFC 컨텍스트를 종료합니다.
+  nfc_exit(context);
+
+  return EXIT_SUCCESS;
+}
